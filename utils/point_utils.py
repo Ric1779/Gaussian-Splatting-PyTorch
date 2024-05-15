@@ -42,14 +42,18 @@ def get_point_clouds(cameras, depths, alphas, rgbs=None):
     rgbas = []
     rays_o, rays_d = get_rays_single_image(H=H, W=W, intrinsics=intrinsics, c2w=c2ws)
     mask = (alphas.flatten(1) == 1)
-    pts = rays_o + rays_d * depths.flatten(1).unsqueeze(-1)
+    print(mask.shape) # output: torch.Size([20, 65536])
+    pts = rays_o + rays_d * depths.flatten(1).unsqueeze(-1) # depth.flatten(1): shape BxHW; depth.unsqueeze(-1): shape BxHWx1
+    # print(pts.shape) # output: torch.Size([20, 65536, 3])
     rgbas = torch.cat([rgbs, alphas.unsqueeze(-1)], dim=-1)
-    coords = pts[mask].cpu().numpy()
+    coords = pts[mask]
+    # print(coords.shape) # output: torch.Size([181838, 3])
+    coords = coords.cpu().numpy()
     rgbas = rgbas.flatten(1,-2)[mask].cpu().numpy()
 
     if rgbs is not None:
         channels = dict(
-            R=rgbas[..., 0],
+            R=rgbas[..., 0], # shape BxHW
             G=rgbas[..., 1],
             B=rgbas[..., 2],
             A=rgbas[..., 3],
@@ -177,7 +181,7 @@ class PointCloud:
         for i in range(1, num_points):
             idx = np.argmax(cur_dists)
             indices[i] = idx
-            cur_dists = np.minimum(cur_dists, compute_dists(idx))
+            cur_dists = np.minimum(cur_dists, compute_dists(idx)) # element-wise minimum between the corresponding elements
         return self.subsample(indices, **subsample_kwargs)
 
     def subsample(self, indices: np.ndarray, average_neighbors: bool = False) -> "PointCloud":

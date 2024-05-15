@@ -58,7 +58,9 @@ def read_all(folder, resize_factor=1.):
     src_rgbs = torch.stack(src_rgbs, axis=0)
     src_cameras = torch.stack(src_cameras, axis=0)
     src_rgbs = src_alphas[..., None] * src_rgbs + (1-src_alphas)[..., None]
-
+    
+    # print(src_rgbs.shape) # output: torch.Size([20, 256, 256, 3])
+    
     return {
         "rgb": src_rgbs[..., :3],
         "camera": src_cameras,
